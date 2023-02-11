@@ -1,112 +1,118 @@
 import turtle
 
-#vrcholy mnohouhelniku
-vrcholy = [(0,0),(100,0),(100,100),(0,100)]
+class Point:
+    def __init__(self, souradnice_x, souradnice_y):
+        self.__souradnice_x = souradnice_x 
+        self.__souradnice_y = souradnice_y
 
-#hledany bod
-b = (-100,30)
-
-def najdi_teziste(seznam_vrcholu):
-    pocet_stran = len(seznam_vrcholu)
-
-    soucet_x = 0
-    soucet_y = 0
-    for item in seznam_vrcholu:
-        soucet_x = soucet_x + item[0]   
-        soucet_y = soucet_y + item[1]  
-
-    tx = soucet_x/pocet_stran
-    ty = soucet_y/pocet_stran
-
-    return tx,ty
-
-T = najdi_teziste(vrcholy)
-
-
-#nakresleni mnohouhelniku
-for vrchol in vrcholy:
-    turtle.setpos(vrchol)
-turtle.setpos(vrcholy[0])
-
-#nakresli hledany bod
-turtle.penup()
-turtle.setpos(b)
-turtle.pendown()
-turtle.dot()
-
-#nakresli teziste
-turtle.penup()
-turtle.setpos(T)
-turtle.pendown()
-turtle.dot("red")
-
-turtle.exitonclick()
-
-#vyjadri obecnou primku hrany
-def primka_obecne(bod1, bod2):
-    a = bod1[1] - bod2[1]
-    b = bod1[0] - bod2[0]
-    c = ((bod1[0])*(bod2[1])) - ((bod1[1])*(bod2[0]))
-    koeficienty = [a,b,c]
-
-    return koeficienty
-
-#nevim jak to udelat
-# def vytvor_hrany(seznam_vrcholu):
-#     seznam_hran = []
-#     for item in seznam_vrcholu:
-#         hrana = []
-
-hrany = [[(0,0),(100,0)],[(100,0),(100,100)], [(100,100),(0,100)],[(0,100),(0,0)]]
-
-#vraci True pokud je bod ve stejne polorovine jako teziste
-def poloha_bodu_k_hrane(teziste, koeficienty, bod):
-    xt = teziste[0]
-    yt = teziste[1]
-
-    xb = bod[0]
-    yb = bod[1]
-
-    a = koeficienty[0]
-    b = koeficienty[1]
-    c = koeficienty[2]
-
-    poloha_teziste = a*xt + b*yt + c
-    poloha_bodu = a*xb + b*yb + c
-
-    if (poloha_teziste < 0 and poloha_bodu < 0) or (poloha_teziste > 0 and poloha_bodu > 0):
-        return True
+    def getx(self):
+        return self.__souradnice_x
     
-    elif poloha_bodu == 0:
-        return "hrana" #doresiiiiiit
+    def gety(self):
+        return self.__souradnice_y
+
+class Line:
+    def __init__(self, bod_A, bod_B):
+        self.__bod_A = bod_A
+        self.__bod_B = bod_B
+
+        self.a = self.__bod_A.getx() - self.__bod_B.gety()
+        self.b = self.__bod_A.gety() - self.__bod_B.getx()
+        self.c = ((self.__bod_A.getx())*(self.__bod_B.gety())) - ((self.__bod_A.gety())*(self.__bod_B.getx()))
+
+
+    def poloha_bodu_k_hrane(self, teziste, bod):    
+        poloha_teziste = self.a*teziste.getx() + self.b*teziste.gety() + self.c
+        poloha_bodu = self.a*bod.getx() + self.b*bod.gety() + self.c
+
+        if (poloha_teziste < 0 and poloha_bodu < 0) or (poloha_teziste > 0 and poloha_bodu > 0):
+            return "uvnitr"
+        
+        elif poloha_bodu == 0:
+            return "hrana"
+        
+        else:
+            return "vne"
+        
+
+class Polygon:
+    def __init__(self, *v): 
+        self.__pocet_vrcholu = len(v)
+        if len(v) < 3:
+            raise Exception("Zadany utvar neni mnohouhelnik, protoze ma mene nez 3 vrcholy")
+        
+        self.__vrcholy = v
+
+        self.seznam_hran = []
+        for i, vrchol in enumerate(self.__vrcholy):
+            self.seznam_hran.append(Line(self.__vrcholy[i-1],vrchol))
+
+        self.__T = self.najdi_teziste()
+            
+    def najdi_teziste(self):
+        soucet_x = 0
+        soucet_y = 0
+        for item in self.__vrcholy:
+            soucet_x = soucet_x + item.getx()    
+            soucet_y = soucet_y + item.gety()  
+
+        tx = soucet_x/self.__pocet_vrcholu
+        ty = soucet_y/self.__pocet_vrcholu
+
+        return Point(tx,ty)
     
-    else:
-        return False
+    def poloha_bodu(self, bod):
+        bod_na_hrane = 0
+        for hrana in self.seznam_hran:
+            poloha = hrana.poloha_bodu_k_hrane(self.__T, bod)
 
- 
-seznam_boolu = []
-for hrana in hrany:
-    k = primka_obecne(hrana[0], hrana[1])
-    bool = poloha_bodu_k_hrane(T,k,b)
-    seznam_boolu.append(bool)
+            if poloha == "vne":
+                return "Bod se nachazi vne mnohouhelniku."
 
-def bod_uvnitr(seznam):
-    prvni_prvek = seznam[0]
-    je_stejny = True
-    for item in seznam:
-        if prvni_prvek != item:
-            je_stejny =  False
-            break
-    if je_stejny == True:
-        return True
-    else:
-        return False
+            elif poloha == "hrana":
+                bod_na_hrane += 1
 
-if bod_uvnitr(seznam_boolu) == True:
-    print("Zadaný bod se nachází uvnitř konvexního mnohoúhelníku.")
+        if bod_na_hrane > 0:
+            return "Bod lezi na hrane."
+        
+        else:
+            return "Bod se nachazi uvnitr mnohouhelniku."
+        
+with open("67_vrcholy_a_bod.txt") as f:
+    data = f.read()
+    seznam_dat = data.split("\n")
+    seznam_bodu = []
 
-else:
-    print("Zadaný bod se nachází vně konvexního mnohoúhelníku.")
+    for bod in seznam_dat:
+        x, y = bod.split(",")
+        seznam_bodu.append(Point(float(x),float(y)))
+            
+    bod = seznam_bodu[-1]
+    polygon = Polygon(*seznam_bodu[0:-1])
+
+    print(polygon.poloha_bodu(bod))
+
+    #nakresleni mnohouhelniku
+    for vrchol in polygon._Polygon__vrcholy:
+        turtle.setpos(vrchol.getx(),vrchol.gety())
+    turtle.setpos(polygon._Polygon__vrcholy[0].getx(),polygon._Polygon__vrcholy[0].gety())
+
+    #nakresli hledany bod
+    turtle.penup()
+    turtle.setpos(bod.getx(),bod.gety())
+    turtle.pendown()
+    turtle.dot()
+
+    #nakresli teziste
+    turtle.penup()
+    turtle.setpos(polygon._Polygon__T.getx(),polygon._Polygon__T.gety())
+    turtle.pendown()
+    turtle.dot("red")
+
+    turtle.exitonclick()
+
+
+
 
 
 
