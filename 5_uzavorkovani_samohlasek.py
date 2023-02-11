@@ -1,9 +1,11 @@
-#vyjimka proti otevreni prazdneho nebo neexistujiciho souboru
+# Zkouška z úvodu do programování
+# Úloha 5: Uzávorkování samohlásek
+# Eva Lemberková, MOBIBO, 2. ročník
+
+#výjimka proti otevření prázdného nebo neexistujícího souboru
 try:
     with open("5_vstupni_text.txt", encoding = "utf-8") as f:
         assert(len(f.readlines()) > 0)
-    with open("5_vstupni_text.txt", encoding = "utf-8") as f:
-        text = f.read()
 except FileNotFoundError:
     print("Soubor, který chcete otevřít, neexistuje.")
     quit()
@@ -11,28 +13,51 @@ except AssertionError:
     print("Ve vstupním souboru nejsou žádná data.")
     quit()
 
-#vytvoreni tridy "Character", ktera obsahuje staticky seznam samohlasek
+#otevření vstupního souboru "5_vstupni_text.txt" pro čtení a načtení ho do proměnné "text"
+with open("5_vstupni_text.txt", encoding = "utf-8") as f:
+        text = f.read()
+
+#vytvoření třídy "Character", která obsahuje statický seznam samohlásek
 class Character:
     vowels = ["a", "á", "e", "ě", "é", "i", "í", "o", "ó", "u", "ů", "ú", "y", "ý"]
 
-#inicializace
+#inicializace třídy
     def __init__(self, character):
             self.__character = character
 
-#metoda isVowel porovnava nacteny znak se seznamem samohlasek a rozhodne, jestli je dany znak samohlaska
+#metoda isVowel porovnává načtený znak se seznamem samohlásek a rozhodne, jestli je daný znak samohláska
     def isVowel(self):
         if self.__character in Character.vowels:
             return True
 
-#otevreni souboru "5_vystupni_text.txt" pro psani       
+#otevření souboru "5_vystupni_text.txt" pro psaní       
 with open("5_vystupni_text.txt", "w", encoding = "utf-8") as f:  
-#prochazeni jednotlivych znaku v souboru a pokud to jsou samohlasky, napisi se do souboru ohranicene zavorkami a pokud to jsou jine znaky, napisi se do souboru v nezmenenne podobe     
+#procházení jednotlivých znaků v souboru a jejich rozdělění do 4 kategorií podle dvou aspektů (jestli jsou to samohlásky a jestli i předchozí znak byl samohláska) 
+#na základě zařazení do konkrétní kategorie se vypíší/nevypíší závorky do výstupního souboru 
+    previous_vowel = False
     for znak in text:
-        ch = Character(znak.lower())
-        if ch.isVowel() == True:
-            f.write("(" + znak + ")")
+        ch = Character(znak.lower()) #všechny znaky jsou procházeny jako malá písmena
+   
+        if ch.isVowel() == True and previous_vowel == False:
+            f.write("(" + znak)
+            previous_vowel = True
+            print(previous_vowel)
+
+        elif ch.isVowel() == True and previous_vowel == True:
+            f.write(znak + ")")
+            previous_vowel = True
+            print(previous_vowel)
+
+        elif ch.isVowel() == False and previous_vowel == True:
+            f.write(")" + znak) 
+            previous_vowel = False
+            print(previous_vowel)    
+
         else:
             f.write(znak)
+            previous_vowel = False
+            print(previous_vowel)
+            
 
 
 
