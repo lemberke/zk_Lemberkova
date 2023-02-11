@@ -29,6 +29,8 @@ class Character:
     def isVowel(self):
         if self.__character in Character.vowels:
             return True
+        else:
+             return False
 
 #otevření souboru "5_vystupni_text.txt" pro psaní       
 with open("5_vystupni_text.txt", "w", encoding = "utf-8") as f:  
@@ -41,22 +43,22 @@ with open("5_vystupni_text.txt", "w", encoding = "utf-8") as f:
         if ch.isVowel() == True and previous_vowel == False:
             f.write("(" + znak)
             previous_vowel = True
-            print(previous_vowel)
-
+        
         elif ch.isVowel() == True and previous_vowel == True:
-            f.write(znak + ")")
+            f.write(znak)
             previous_vowel = True
-            print(previous_vowel)
 
         elif ch.isVowel() == False and previous_vowel == True:
             f.write(")" + znak) 
-            previous_vowel = False
-            print(previous_vowel)    
+            previous_vowel = False 
 
         else:
             f.write(znak)
             previous_vowel = False
-            print(previous_vowel)
+
+#připíše na konec textu závorku, pokud je posledním znakem samohláska
+    if previous_vowel == True:
+         f.write(")")
             
 
 
