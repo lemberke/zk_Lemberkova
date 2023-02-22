@@ -4,149 +4,114 @@
 
 import turtle
 
-#vytvori se class "Point", kde je kazdy objekt charakterizovan souradnicemi x a y
+#class "Point", where each object is characterised by coordinates x and y
 class Point:
-    def __init__(self, souradnice_x, souradnice_y):
-        self.__souradnice_x = souradnice_x 
-        self.__souradnice_y = souradnice_y
+    def __init__(self, coordinate_x, coordinate_y):
+        self.__coordinate_x = coordinate_x 
+        self.__coordinate_y = coordinate_y
 
-    #metoda "getx()" umoznuje ziskat souradnici x z objektu tridy "Point"  
+    #method "getx()" gets x coordinate from an object of class "Point"  
     def getx(self):
-        return self.__souradnice_x
+        return self.__coordinate_x
 
-    #metoda "gety()" umoznuje ziskat souradnici y z objektu tridy "Point"  
+    #method "gety()" gets y coordinate from an object of class "Point" 
     def gety(self):
-        return self.__souradnice_y
+        return self.__coordinate_y
 
-#vytvori se class Line, ktera je charakterizovana dvema body
+#class "Line" which is characterised by two points
 class Line:
-    def __init__(self, bod_A, bod_B):
-        self.__bod_A = bod_A
-        self.__bod_B = bod_B
+    def __init__(self, point_A, point_B):
+        self.__point_A = point_A
+        self.__point_B = point_B
+    
+    def location(self, analyzed_point):
+        # vector of the line containting the edge of polygon
+        u = [self.__point_B.getx() - self.__point_A.getx(), self.__point_B.gety() - self.__point_A.gety()]
+        # vector from the beginning point of the vector "u" to a point "analyzed_point"
+        v = [analyzed_point.getx() - self.__point_A.getx(), analyzed_point.gety() - self.__point_A.gety()]
+        # t = u_x*v_y - u_y*v_x
+        t = u[0]*v[1] - u[1]*v[0]
+        if t > 0:
+            return "left"
+        # checks if the analyzed point lies on the edge of polygon not only on the line
+        elif t == 0 \
+            and analyzed_point.getx() >= min(self.__point_A.getx(), self.__point_B.getx()) \
+            and analyzed_point.getx() <= max(self.__point_A.getx(), self.__point_B.getx()) \
+            and analyzed_point.gety() >= min(self.__point_A.gety(), self.__point_B.gety()) \
+            and analyzed_point.gety() <= max(self.__point_A.gety(), self.__point_B.gety()):
+            return "on"
+        return "right"        
 
-    #po dosazeni souradnic x a y obou bodu, jsou podle vzorce vypocitany koeficienty, pomoci kterych muze byt primka vyjadrena obecne
-        self.a = self.__bod_A.gety() - self.__bod_B.gety()
-        self.b = self.__bod_A.getx() - self.__bod_B.getx()
-        self.c = ((self.__bod_A.getx())*(self.__bod_B.gety())) - ((self.__bod_A.gety())*(self.__bod_B.getx()))
-
-    #funkce "poloha_bodu_k_hrane" ma parametry souradnice teziste (T) a analyzovany bod(B) a urci, jestli jakou polohu ma analyzovany bod vuci polorovine dane tezistem a hranou
-    def poloha_bodu_k_hrane(self, T, B):    
-        poloha_teziste = self.a*T.getx() + self.b*T.gety() + self.c #vyjadrena rovnice poloroviny dane hranou a tezistem
-        poloha_bodu = self.a*B.getx() + self.b*B.gety() + self.c #vyjadrena rovnice poloroviny dane hranou a bodem
-
-        #pokud jsou hodnoty rovnice poloroviny po dosazeni souradnic teziste a bodu obe zaporne nebo obe kladne, znamena to ze lezi ve stejne polorovine a tedy uvnitr mnohouhelniku -> funkce vraci string "uvnitr" 
-        if (poloha_teziste < 0 and poloha_bodu < 0) or (poloha_teziste > 0 and poloha_bodu > 0):
-            return "uvnitr"
-
-        #pokud je hodnota promenne "poloha_bodu" rovna nule, znamena to, ze bod lezi na primce, jejiz soucasti je hrana -> funkce vraci string "hrana"  
-        elif poloha_bodu == 0:
-            return "hrana"
-
-        #ve zbytku pripadu to znamena, ze se bod nachazi vne -> funkce vraci string "vne"      
-        else:
-            return "vne"
-        
-#vytvori se trida "Polygon" charakterizovana neurcitym poctem vrcholu mnohouhelniku
+#class "Polygon" characterised by various amount of vertices 
 class Polygon:
     def __init__(self, *v): 
-        self.__pocet_vrcholu = len(v)
+        self.__number_of_v = len(v)
 
-        #pokud je vrcholu mene nez 3, je vyvolana vyjimka, protoze dany utvar neni mnohouhelnik
+        #if the amount of vertices is lower than 3, the exception is raised, because from the vertices no polygon can be constructed
         if len(v) < 3:
-            raise Exception("Zadany utvar neni mnohouhelnik, protoze ma mene nez 3 vrcholy")
+            raise Exception("The shape is not a polygon, because less than three vertices were given.")
         
-        self.__vrcholy = v
+        self.__vertices = v
 
-        #vytvori se seznam hran, kam se pridaji vsechny hrany mnohouhelniku
-        self.seznam_hran = []
-        for i, vrchol in enumerate(self.__vrcholy):
-            self.seznam_hran.append(Line(self.__vrcholy[i-1],vrchol))
+        #all edges of the polygon are appended to the list of edges 
+        self.list_of_edges = []
+        for i, vrchol in enumerate(self.__vertices):
+            self.list_of_edges.append(Line(self.__vertices[i-1],vrchol))
 
-        #je inicializovano teziste daneho polygonu pomoci funkce "najdi_teziste"
-        self.__T = self.najdi_teziste()
-
-    #metoda "najdi_teziste" pomoci vzorce vypocita teziste daneho mnohouhelniku       
-    def najdi_teziste(self):
-        soucet_x = 0
-        soucet_y = 0
-        for item in self.__vrcholy:
-            soucet_x = soucet_x + item.getx()    
-            soucet_y = soucet_y + item.gety()  
-
-        tx = soucet_x/self.__pocet_vrcholu
-        ty = soucet_y/self.__pocet_vrcholu
-
-        return Point(tx,ty)
-    
-    #metoda "poloha_bodu" provede pro kazdou hranu metodu "poloha_bodu_k_hrane" a podle kombinace vysledku u konkretniho polygonu urci polohu bodu vuci mnohouhelniku
-    def poloha_bodu(self, hledany_bod):
-        bod_na_hrane = 0
-        for hrana in self.seznam_hran:
-            poloha = hrana.poloha_bodu_k_hrane(self.__T, hledany_bod)
-
-            #pokud se bod nachazi vne alespon vuci jedne polorovine dane hranou a tezistem, znamena to, ze lezi vne mnohouhelniku
-            if poloha == "vne":
-                return "Bod leží vně mnohoúhelníku."
-
-            elif poloha == "hrana":
-                bod_na_hrane += 1
-
-        #pokud se bod nachazi na primce dane hranou a uvnitr alespon jedne dalsi poloroviny dane hranou a tezistem, znamena to, ze lezi na hrane
-        if bod_na_hrane > 0:
-            return "Bod leží na hraně mnohoúhelníku."
-        
-        #ve zbytku pripadu to znamena, ze bod lezi uvnitr mnohouhelniku
-        else:
-            return "Bod leží uvnitř mnohouhelníku."
-        
-#vyjimka proti otevreni prazdneho nebo neexistujiciho souboru
+    #function "location_of_point" determines the orientation of point for every edge of polygon, and then decides about the location of the point 
+    def location_of_point(self, analyzed_point):
+        last_orientation = None
+        for edge in self.list_of_edges:
+            orientation = edge.location(analyzed_point)
+            if orientation == "on":
+                return "The point lies on the edge of the polygon."
+            elif last_orientation and orientation != last_orientation:
+                return "The point lies outside of the polygon."
+            last_orientation = orientation
+            return "The point lies inside of the polygon."
+      
+#the exception against opening an empty or non-existing file
 try:
     with open("67_vrcholy_a_bod.txt", encoding = "utf-8") as f:
         assert(len(f.readlines()) > 0)
 except FileNotFoundError:
-    print("Soubor, který chcete otevřít, neexistuje.")
+    print("The file you are trying to open does not exist.")
     quit()
 except AssertionError:
-    print("Ve vstupním souboru nejsou žádná data.")
+    print("You are opening an empty file.")
     quit()
 
-#otevreni souboru "67_vrcholy_a_bod.txt" pro cteni a nacteni jeho obsahu do promenne "data"       
+#opening the file "67_vrcholy_a_bod.txt" for reading and loading it to the variable "data"       
 with open("67_vrcholy_a_bod.txt", encoding = "utf-8") as f:
     data = f.read()
 
-    #ulozeni dat do seznamu
-    seznam_dat = data.split("\n")
+    #loading dates to the list
+    list_of_data = data.split("\n")
 
-    #vytvoreni seznamu bodu, do ktereho jsou pridany body ze seznamu "seznam_dat", ale jsou prevedene do tridy "Point"
-    seznam_bodu = []
-    for bod in seznam_dat:
-        x, y = bod.split(",")
-        seznam_bodu.append(Point(float(x),float(y)))
+    #list of points to which the points from the list of dates are added and they become objects from class Point
+    list_of_points = []
+    for b in list_of_data:
+        x, y = b.split(",")
+        list_of_points.append(Point(float(x),float(y)))
 
-    #vytvoreni objektu "bod" tridy "Point", ktery je v seznamu bodu umisten jako posledni a predstavuje bod, jehoz polohu chceme zjistit        
-    bod = seznam_bodu[-1]
+    #an object from class "Point", which is on the last position in the list "list_of_points" and it represents the point, whose location we analyze        
+    point = list_of_points[-1]
 
-    #vytvoreni objektu "polygon" tridy "Polygon", ktery je charakterizovan seznamem bodu od nulteho prvku po predposledni a tyto prvky predstavuji jeho vrcholy
-    polygon = Polygon(*seznam_bodu[0:-1])
+    #an object from class "Polygon", which is characterised by the "list_of_points" but without the item on the list position of the list and these items represent the vertices of the polygon
+    polygon = Polygon(*list_of_points[0:-1])
 
-    print(polygon.poloha_bodu(bod))
+    print(polygon.location_of_point(point))
 
-    #nakresleni mnohouhelniku
-    for vrchol in polygon._Polygon__vrcholy:
+    #visualising the polygon
+    for vrchol in polygon._Polygon__vertices:
         turtle.setpos(vrchol.getx(),vrchol.gety())
-    turtle.setpos(polygon._Polygon__vrcholy[0].getx(),polygon._Polygon__vrcholy[0].gety())
+    turtle.setpos(polygon._Polygon__vertices[0].getx(),polygon._Polygon__vertices[0].gety())
 
-    #nakresli hledany bod
+    #visualising the point
     turtle.penup()
-    turtle.setpos(bod.getx(),bod.gety())
+    turtle.setpos(point.getx(),point.gety())
     turtle.pendown()
     turtle.dot()
-
-    #nakresli teziste
-    turtle.penup()
-    turtle.setpos(polygon._Polygon__T.getx(),polygon._Polygon__T.gety())
-    turtle.pendown()
-    turtle.dot("red")
 
     turtle.exitonclick()
 
